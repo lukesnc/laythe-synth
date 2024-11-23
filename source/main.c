@@ -220,6 +220,11 @@ int main(int argc, char *argv[]) {
     }
 
     // Cleanup
+    if (recording) {
+        recording = false;
+        record_sample(0);
+    }
+
     UnloadAudioStream(stream);
     CloseAudioDevice();
     CloseWindow();
