@@ -1,9 +1,13 @@
+#include "oscillator.h"
+#include "wav.h"
+
 #include "raylib.h"
 
 #include <fcntl.h>
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/soundcard.h>
 #include <unistd.h>
@@ -13,6 +17,7 @@
 #define BIT_DEPTH (16)
 #define MAX_VOICES (8)
 #define MAX_OSCILLATORS (2)
+#define MAX_RECORDING_SIZE (120 * SAMPLE_RATE * (BIT_DEPTH / 8 * CHANNELS))
 
 // Current midi
 static uint8_t active_notes[MAX_VOICES] = {0};
@@ -22,26 +27,22 @@ float freq_from_midi(const uint8_t note) {
     return 440.0f * pow(2.0f, (note - 69) / 12.0f);
 }
 
-// Oscillator
-typedef int16_t (*WtCallback)(float, int32_t); // Wavetable callback fn
-typedef struct {
-    bool enabled;
-    float level;
-    WtCallback play;
-} Oscillator;
+// Recording
+static bool recording = false;
+void record_sample(const int16_t sample) {
+    static uint8_t rec_buffer[MAX_RECORDING_SIZE];
+    static uint32_t rec_playhead = 0;
 
-// Wavetable algorithms
-int16_t sin_wave(const float phase, const int32_t amp) {
-    return (int16_t)(amp * sinf(2.0f * M_PI * phase));
+    if (recording) {
+        write_wav_sample(rec_buffer, rec_playhead, sample);
+        rec_playhead++;
+    } else {
+        if (rec_playhead > 0) {
+            write_wav_file("recording.wav", rec_buffer, rec_playhead);
+            rec_playhead = 0;
+        }
+    }
 }
-
-int16_t triangle_wave(const float phase, const int32_t amp) {
-    const float t = 2.0f * fabs(2.0f * (phase - floorf(phase + 0.5f))) - 1.0f;
-    return (int16_t)(amp * t);
-}
-
-// Envelope generators
-// TODO
 
 // Audio stream callback
 void audio_callback(void *buffer, uint32_t frames) {
@@ -53,10 +54,6 @@ void audio_callback(void *buffer, uint32_t frames) {
 
     // Track phase for each voice
     static float phases[MAX_VOICES] = {0.0f};
-
-    if (active_note_count == 0) {
-        return;
-    }
 
     // TODO: stop using global amplitude
     const float amp = 20000.0f;
@@ -90,6 +87,9 @@ void audio_callback(void *buffer, uint32_t frames) {
 
         // Write to stream
         d[frame] = (int16_t)sample;
+
+        // Check if recording
+        record_sample((int16_t)sample);
     }
 }
 
@@ -145,15 +145,14 @@ int main(int argc, char *argv[]) {
     SetAudioStreamCallback(stream, audio_callback);
     PlayAudioStream(stream);
 
+    // Init wav lib (for recording)
+    if (!wav_init(CHANNELS, SAMPLE_RATE, BIT_DEPTH))
+        return 1;
+
     // Event loop
     while (!WindowShouldClose()) {
-        /*for (int i = 0; i < MAX_VOICES; i++) {*/
-        /*    printf("%d ", active_notes[i]);*/
-        /*}*/
-        /*printf("\n");*/
-
+        // Get current notes (either keyboard or midi)
         if (use_keyboard) {
-            // Check current notes
             for (uint8_t key = 0; key < 255; key++) {
                 uint8_t note = 0;
                 switch (key) { // clang-format off
@@ -199,10 +198,20 @@ int main(int argc, char *argv[]) {
                 }
             }
         } else {
-            // Fetch notes
+            // Fetch midi notes
             read(midi_fd, &midi_data_in, sizeof(midi_data_in));
             if (midi_data_in[0] == SEQ_MIDIPUTC) {
                 printf("received MIDI byte: %d\n", midi_data_in[1]);
+            }
+        }
+
+        // Toggle recording with R
+        if (IsKeyPressed(KEY_R)) {
+            recording = !recording;
+            if (recording) {
+                printf("Recording started\n");
+            } else {
+                printf("Recording stopped\n");
             }
         }
 

@@ -4,7 +4,7 @@ INCLUDES=
 LFLAGS=-lm -lraylib
 
 APP=laythe
-SRC=source/main.c
+SRC=source/main.c source/oscillator.c
 
 all: $(SRC)
 	mkdir -p target
