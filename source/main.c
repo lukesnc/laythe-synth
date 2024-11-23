@@ -1,8 +1,3 @@
-#include "oscillator.h"
-#include "wav.h"
-
-#include "raylib.h"
-
 #include <fcntl.h>
 #include <math.h>
 #include <stdint.h>
@@ -11,6 +6,11 @@
 #include <string.h>
 #include <sys/soundcard.h>
 #include <unistd.h>
+
+#include "raylib.h"
+
+#include "oscillator.h"
+#include "wav.h"
 
 #define SAMPLE_RATE (44100)
 #define CHANNELS (1)
@@ -45,13 +45,9 @@ void record_sample(const int16_t sample) {
 }
 
 // Audio stream callback
+static Oscillator oscA = {false, 1.0f, "sine", sin_wave};
+static Oscillator oscB = {true, 1.0f, "triangle", triangle_wave};
 void audio_callback(void *buffer, uint32_t frames) {
-    // Create oscillators
-    static Oscillator oscs[MAX_OSCILLATORS] = {
-        {false, 1.0f, sin_wave},
-        {true, 1.0f, triangle_wave},
-    };
-
     // Track phase for each voice
     static float phases[MAX_VOICES] = {0.0f};
 
@@ -67,11 +63,10 @@ void audio_callback(void *buffer, uint32_t frames) {
         for (uint8_t n = 0; n < active_note_count; n++) {
             const float freq = freq_from_midi(active_notes[n]);
 
-            for (size_t o = 0; o < MAX_OSCILLATORS; o++) {
-                if (!oscs[o].enabled)
-                    continue;
-                sample += oscs[o].play(phases[n], amp * oscs[o].level);
-            }
+            if (oscA.enabled)
+                sample += oscA.play(phases[n], amp * oscA.level);
+            if (oscB.enabled)
+                sample += oscB.play(phases[n], amp * oscB.level);
 
             // Update phase
             phases[n] += freq / SAMPLE_RATE;
@@ -215,7 +210,49 @@ int main(int argc, char *argv[]) {
             }
         }
 
+        // ---- Draw -----
         BeginDrawing();
+
+        const Vector2 mouse_pos = GetMousePosition();
+
+        // Osc A options
+        DrawRectangle(10, 10, 60, 35, WHITE);
+        DrawText("oscA", 15, 15, 20, BLACK);
+
+        const Rectangle oscA_enabled = {80, 10, 35, 35};
+        DrawRectangleRec(oscA_enabled, oscA.enabled ? GREEN : RED);
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
+            CheckCollisionPointRec(mouse_pos, oscA_enabled)) {
+            oscA.enabled = !oscA.enabled;
+        };
+
+        const Rectangle oscA_wavetable = {125, 10, 100, 35};
+        DrawRectangleRec(oscA_wavetable, WHITE);
+        DrawText(oscA.wt_name, 130, 15, 20, BLACK);
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
+            CheckCollisionPointRec(mouse_pos, oscA_wavetable)) {
+            cycle_wavetable(&oscA);
+        };
+
+        // Osc B options
+        DrawRectangle(10, 50, 60, 35, WHITE);
+        DrawText("oscB", 15, 55, 20, BLACK);
+
+        const Rectangle oscB_enabled = {80, 50, 35, 35};
+        DrawRectangleRec(oscB_enabled, oscB.enabled ? GREEN : RED);
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
+            CheckCollisionPointRec(mouse_pos, oscB_enabled)) {
+            oscB.enabled = !oscB.enabled;
+        };
+
+        const Rectangle oscB_wavetable = {125, 50, 100, 35};
+        DrawRectangleRec(oscB_wavetable, WHITE);
+        DrawText(oscB.wt_name, 130, 55, 20, BLACK);
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
+            CheckCollisionPointRec(mouse_pos, oscB_wavetable)) {
+            cycle_wavetable(&oscB);
+        };
+
         EndDrawing();
     }
 

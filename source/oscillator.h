@@ -11,8 +11,11 @@ typedef int16_t (*WtCallback)(float, int32_t);
 typedef struct {
     bool enabled;
     float level;
+    char *wt_name;
     WtCallback play;
 } Oscillator;
+
+void cycle_wavetable(Oscillator *osc);
 
 // Wavetable algos
 int16_t sin_wave(const float phase, const int32_t amp);
