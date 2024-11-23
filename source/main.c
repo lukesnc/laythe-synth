@@ -46,7 +46,7 @@ int16_t triangle_wave(const float phase, const int32_t amp) {
 // Audio stream callback
 void audio_callback(void *buffer, uint32_t frames) {
     // Create oscillators
-    const static Oscillator oscs[MAX_OSCILLATORS] = {
+    static Oscillator oscs[MAX_OSCILLATORS] = {
         {false, 1.0f, sin_wave},
         {true, 1.0f, triangle_wave},
     };
