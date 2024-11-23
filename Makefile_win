@@ -1,0 +1,19 @@
+CC=x86_64-w64-mingw32-gcc
+CFLAGS=-Wall -Wextra
+
+INCLUDES=-Iraylib-5.5_win64_mingw-w64/include
+LFLAGS=-lm -Lraylib-5.5_win64_mingw-w64/lib -lraylib -lwinmm -lgdi32
+
+APP=laythe.exe
+SRC=source/main.c
+
+all: $(SRC)
+	mkdir -p target
+	$(CC) -o target/$(APP) $(SRC) $(INCLUDES) $(LFLAGS) $(CFLAGS)
+
+.PHONY: clean run
+clean:
+	rm -rf target/
+
+run: all
+	./target/$(APP) $(ARGS)
