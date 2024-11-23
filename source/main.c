@@ -117,6 +117,9 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    // Use default value if empty
+    midi_dev = (midi_dev != NULL) ? midi_dev : "/dev/snd/seq";
+
     // Set up midi
     int midi_fd;
     uint8_t midi_data_in[4];
