@@ -262,11 +262,15 @@ int main(int argc, char *argv[]) {
             char textbuf[10];
             sprintf(textbuf, "%0.2f", oscs[i].level);
             DrawText(textbuf, 240, posY + 5, 20, BLACK);
-            if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) &&
-                CheckCollisionPointRec(mouse_pos, osc_level)) {
-                oscs[i].level += 0.01;
-                if (oscs[i].level > 1.0f)
-                    oscs[i].level -= 1.0f;
+            if (CheckCollisionPointRec(mouse_pos, osc_level)) {
+                if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+                    oscs[i].level += 0.01;
+                    if (oscs[i].level > 1.0f)
+                        oscs[i].level -= 1.0f;
+                } else if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
+                    // Reset with right click
+                    oscs[i].level = 1.0f;
+                }
             };
 
             posY += 40;
