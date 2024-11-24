@@ -22,6 +22,7 @@
 // Current notes & midi
 static uint8_t active_notes[MAX_VOICES] = {0};
 static uint8_t active_note_count = 0;
+static int8_t octave_shift = 0;
 float freq_from_midi(const uint8_t note) {
     return 440.0f * pow(2.0f, (note - 69) / 12.0f);
 }
@@ -62,10 +63,11 @@ void record_sample(const int16_t sample) {
 
 // Audio stream callback
 static Oscillator oscs[MAX_OSCILLATORS] = {
-    {false, 1.0f, "sine", sine_wave},
     {true, 1.0f, "triangle", triangle_wave},
+    {false, 1.0f, "sine", sine_wave},
 };
 static bool filtering = false;
+static float filter_cutoff = 1000.0f;
 void audio_callback(void *buffer, uint32_t frames) {
     // Track phase for each voice
     static float phases[MAX_VOICES] = {0.0f};
@@ -96,7 +98,7 @@ void audio_callback(void *buffer, uint32_t frames) {
         }
 
         if (filtering) {
-            sample = lowpass(sample);
+            sample = lowpass(sample, 400.0f);
         }
 
         // Check bounds of signed 16-bit sample
@@ -196,6 +198,8 @@ int main(int argc, char *argv[]) {
                     default: continue;
                 } // clang-format on
 
+                note = note + (12 * octave_shift);
+
                 // Add all depressed keys to active notes
                 if (IsKeyDown(key)) {
                     for (uint8_t i = 0; i < MAX_VOICES; i++) {
@@ -238,29 +242,29 @@ int main(int argc, char *argv[]) {
             DrawText(name, 15, posY + 5, 20, BLACK);
 
             // Enabled button
-            const Rectangle osc_enabled = {80, posY, 35, 35};
-            DrawRectangleRec(osc_enabled, oscs[i].enabled ? GREEN : RED);
+            const Rectangle osc_enabled_rec = {80, posY, 35, 35};
+            DrawRectangleRec(osc_enabled_rec, oscs[i].enabled ? GREEN : RED);
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
-                CheckCollisionPointRec(mouse_pos, osc_enabled)) {
+                CheckCollisionPointRec(mouse_pos, osc_enabled_rec)) {
                 oscs[i].enabled = !oscs[i].enabled;
             };
 
             // Wavetable name
-            const Rectangle osc_wavetable = {125, posY, 100, 35};
-            DrawRectangleRec(osc_wavetable, WHITE);
+            const Rectangle osc_wavetable_rec = {125, posY, 100, 35};
+            DrawRectangleRec(osc_wavetable_rec, WHITE);
             DrawText(oscs[i].wt_name, 130, posY + 5, 20, BLACK);
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
-                CheckCollisionPointRec(mouse_pos, osc_wavetable)) {
+                CheckCollisionPointRec(mouse_pos, osc_wavetable_rec)) {
                 cycle_wavetable(&oscs[i]);
             };
 
             // Oscillator level
-            const Rectangle osc_level = {235, posY, 50, 35};
-            DrawRectangleRec(osc_level, WHITE);
-            char textbuf[10];
-            sprintf(textbuf, "%0.2f", oscs[i].level);
-            DrawText(textbuf, 240, posY + 5, 20, BLACK);
-            if (CheckCollisionPointRec(mouse_pos, osc_level)) {
+            const Rectangle osc_level_rec = {235, posY, 50, 35};
+            DrawRectangleRec(osc_level_rec, WHITE);
+            char level[10];
+            sprintf(level, "%0.2f", oscs[i].level);
+            DrawText(level, 240, posY + 5, 20, BLACK);
+            if (CheckCollisionPointRec(mouse_pos, osc_level_rec)) {
                 if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
                     oscs[i].level += 0.01;
                     if (oscs[i].level > 1.0f)
@@ -275,25 +279,65 @@ int main(int argc, char *argv[]) {
         }
 
         // Draw recording button
-        const Rectangle record_button = {305, 10, 35, 35};
-        DrawRectangleRec(record_button, recording ? RED : MAROON);
-        DrawText("R", 310, 15, 20, BLACK);
+        const Rectangle record_button_rec = {10, 105, 35, 35};
+        DrawRectangleRec(record_button_rec, recording ? RED : MAROON);
+        DrawText("R", 15, 110, 20, BLACK);
 
         // Toggle recording with R or on-screen button
         if ((IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
-             CheckCollisionPointRec(mouse_pos, record_button)) ||
+             CheckCollisionPointRec(mouse_pos, record_button_rec)) ||
             IsKeyPressed(KEY_R)) {
             recording = !recording;
             printf(recording ? "Recording started\n" : "Recording stopped\n");
         };
 
+        // Draw octave + / - buttons
+        DrawRectangle(50, 105, 45, 35, WHITE);
+        DrawText("oct", 55, 110, 20, BLACK);
+        const Rectangle octave_plus_rec = {100, 105, 35, 35};
+        DrawRectangleRec(octave_plus_rec, WHITE);
+        DrawText("+", 105, 110, 20, BLACK);
+        const Rectangle octave_minus_rec = {140, 105, 35, 35};
+        DrawRectangleRec(octave_minus_rec, WHITE);
+        DrawText("-", 145, 110, 20, BLACK);
+
+        // Check octave shift
+        if ((IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
+             CheckCollisionPointRec(mouse_pos, octave_minus_rec)) ||
+            IsKeyPressed(KEY_MINUS)) {
+            octave_shift--;
+        } else if ((IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
+                    CheckCollisionPointRec(mouse_pos, octave_plus_rec)) ||
+                   IsKeyPressed(KEY_EQUAL)) {
+            octave_shift++;
+        }
+
         // Draw filter controls
-        const Rectangle filter = {10, 160, 100, 35};
-        DrawRectangleRec(filter, filtering ? YELLOW : ORANGE);
+        const Rectangle filter_rec = {10, 160, 100, 35};
+        DrawRectangleRec(filter_rec, filtering ? YELLOW : ORANGE);
         DrawText(filtering ? "filter on" : "filter off", 15, 165, 20, BLACK);
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
-            CheckCollisionPointRec(mouse_pos, filter)) {
+            CheckCollisionPointRec(mouse_pos, filter_rec)) {
             filtering = !filtering;
+        };
+
+        const Rectangle filter_cutoff_rec = {120, 160, 100, 35};
+        DrawRectangleRec(filter_cutoff_rec, WHITE);
+        char cutoff[10];
+        sprintf(cutoff, "%d Hz", (uint32_t)filter_cutoff);
+        DrawText(cutoff, 125, 165, 20, BLACK);
+        if (CheckCollisionPointRec(mouse_pos, filter_cutoff_rec)) {
+            if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+                filter_cutoff += 100;
+                if (filter_cutoff > 16000) {
+                    filter_cutoff -= 16000;
+                }
+            } else if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
+                filter_cutoff -= 10;
+                if (filter_cutoff < 0) {
+                    filter_cutoff += 16000;
+                }
+            }
         };
 
         EndDrawing();
