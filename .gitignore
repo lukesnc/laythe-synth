@@ -1,3 +1,6 @@
 target/
+laythe
+laythe.exe
 thirdparty/*
 *.wav
+recordings/
