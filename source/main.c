@@ -62,6 +62,7 @@ static Oscillator oscs[MAX_OSCILLATORS] = {
     {false, 1.0f, "sine", sine_wave},
     {true, 1.0f, "triangle", triangle_wave},
 };
+static bool filtering = false;
 void audio_callback(void *buffer, uint32_t frames) {
     // Track phase for each voice
     static float phases[MAX_VOICES] = {0.0f};
@@ -89,6 +90,10 @@ void audio_callback(void *buffer, uint32_t frames) {
             phases[n] += freq / SAMPLE_RATE;
             if (phases[n] > 1.0f)
                 phases[n] -= 1.0f;
+        }
+
+        if (filtering) {
+            sample = lowpass(sample);
         }
 
         // Check bounds of signed 16-bit sample
@@ -147,7 +152,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Raylib window init
-    InitWindow(400, 400, "Laythe");
+    InitWindow(360, 240, "Laythe");
     SetTargetFPS(60);
 
     // Raylib audio init
@@ -228,7 +233,7 @@ int main(int argc, char *argv[]) {
 
         const Vector2 mouse_pos = GetMousePosition();
 
-        // Draw oscillator options
+        // Draw oscillator controls
         uint32_t posY = 10;
         for (size_t i = 0; i < MAX_OSCILLATORS; i++) {
             // Oscillator name
@@ -275,6 +280,15 @@ int main(int argc, char *argv[]) {
 
             posY += 40;
         }
+
+        // Draw filter controls
+        const Rectangle filter = {10, 160, 100, 35};
+        DrawRectangleRec(filter, filtering ? YELLOW : ORANGE);
+        DrawText(filtering ? "filter on" : "filter off", 15, 165, 20, BLACK);
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
+            CheckCollisionPointRec(mouse_pos, filter)) {
+            filtering = !filtering;
+        };
 
         EndDrawing();
     }
