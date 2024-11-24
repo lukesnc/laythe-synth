@@ -11,6 +11,7 @@ typedef int16_t (*WtCallback)(float, int32_t);
 typedef struct Oscillator {
     bool enabled;
     float level;
+    int8_t fine_tune;
     char *wt_name;
     WtCallback play;
 } Oscillator;

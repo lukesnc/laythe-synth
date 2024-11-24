@@ -23,8 +23,13 @@
 static uint8_t active_notes[MAX_VOICES] = {0};
 static uint8_t active_note_count = 0;
 static int8_t octave_shift = 0;
+
 float freq_from_midi(const uint8_t note) {
-    return 440.0f * pow(2.0f, (note - 69) / 12.0f);
+    return 440.0f * powf(2.0f, (note - 69) / 12.0f);
+}
+
+float freq_from_cents(const int8_t cents, const float base_freq) {
+    return base_freq * powf(2.0f, cents / 1200.0f);
 }
 
 // Recording
@@ -63,8 +68,8 @@ void record_sample(const int16_t sample) {
 
 // Audio stream callback
 static Oscillator oscs[MAX_OSCILLATORS] = {
-    {true, 1.0f, "triangle", triangle_wave},
-    {false, 1.0f, "sine", sine_wave},
+    {true, 1.0f, 0, "triangle", triangle_wave},
+    {false, 1.0f, 0, "sine", sine_wave},
 };
 static bool filtering = false;
 static float filter_cutoff = 1000.0f;
@@ -82,11 +87,12 @@ void audio_callback(void *buffer, uint32_t frames) {
 
         // Sum all active notes on all oscillators
         for (size_t n = 0; n < active_note_count; n++) {
-            // Apply slight detune for phasing
-            const float freq = freq_from_midi(active_notes[n]) + (0.01f * n);
+            float freq = freq_from_midi(active_notes[n]);
+            freq += (0.01f * n); // Apply slight detune for phasing
 
             for (size_t o = 0; o < MAX_OSCILLATORS; o++) {
                 if (oscs[o].enabled) {
+                    freq = freq_from_cents(oscs[o].fine_tune, freq);
                     sample += oscs[o].play(phases[n], amp * oscs[o].level);
                 }
             }
@@ -232,12 +238,12 @@ int main(int argc, char *argv[]) {
 
         // Draw oscillator controls
         uint32_t posY = 10;
-        for (size_t i = 0; i < MAX_OSCILLATORS; i++) {
+        for (uint32_t i = 0; i < MAX_OSCILLATORS; i++) {
             // Oscillator name
             DrawRectangle(10, posY, 60, 35, WHITE);
             char name[5] = "osc";
             char idx[2];
-            sprintf(idx, "%ld", i);
+            sprintf(idx, "%d", i);
             strcat(name, idx);
             DrawText(name, 15, posY + 5, 20, BLACK);
 
@@ -247,7 +253,7 @@ int main(int argc, char *argv[]) {
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
                 CheckCollisionPointRec(mouse_pos, osc_enabled_rec)) {
                 oscs[i].enabled = !oscs[i].enabled;
-            };
+            }
 
             // Wavetable name
             const Rectangle osc_wavetable_rec = {125, posY, 100, 35};
@@ -256,7 +262,7 @@ int main(int argc, char *argv[]) {
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
                 CheckCollisionPointRec(mouse_pos, osc_wavetable_rec)) {
                 cycle_wavetable(&oscs[i]);
-            };
+            }
 
             // Oscillator level
             const Rectangle osc_level_rec = {235, posY, 50, 35};
@@ -273,7 +279,23 @@ int main(int argc, char *argv[]) {
                     // Reset with right click
                     oscs[i].level = 1.0f;
                 }
-            };
+            }
+
+            // Oscillator fine tune
+            const Rectangle osc_fine_rec = {295, posY, 50, 35};
+            DrawRectangleRec(osc_fine_rec, WHITE);
+            char fine[10];
+            sprintf(fine, "%d", oscs[i].fine_tune);
+            DrawText(fine, 300, posY + 5, 20, BLACK);
+            if (CheckCollisionPointRec(mouse_pos, osc_fine_rec)) {
+                if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+                    if (!(oscs[i].fine_tune >= 100))
+                        oscs[i].fine_tune += 1;
+                } else if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
+                    if (!(oscs[i].fine_tune <= -100))
+                        oscs[i].fine_tune -= 1;
+                }
+            }
 
             posY += 40;
         }
@@ -289,7 +311,7 @@ int main(int argc, char *argv[]) {
             IsKeyPressed(KEY_R)) {
             recording = !recording;
             printf(recording ? "Recording started\n" : "Recording stopped\n");
-        };
+        }
 
         // Draw octave + / - buttons
         DrawRectangle(50, 105, 45, 35, WHITE);
@@ -319,7 +341,7 @@ int main(int argc, char *argv[]) {
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
             CheckCollisionPointRec(mouse_pos, filter_rec)) {
             filtering = !filtering;
-        };
+        }
 
         const Rectangle filter_cutoff_rec = {120, 160, 100, 35};
         DrawRectangleRec(filter_cutoff_rec, WHITE);
@@ -338,7 +360,7 @@ int main(int argc, char *argv[]) {
                     filter_cutoff += 16000;
                 }
             }
-        };
+        }
 
         EndDrawing();
     }
