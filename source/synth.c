@@ -1,4 +1,4 @@
-#include "oscillator.h"
+#include "synth.h"
 
 #include <math.h>
 

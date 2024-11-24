@@ -3,7 +3,7 @@ CFLAGS=-Wall -Wextra
 LFLAGS=-lm -lraylib
 
 APP=laythe
-SRC=source/main.c source/oscillator.c
+SRC=source/main.c source/synth.c
 
 all: $(SRC)
 	$(CC) -o $(APP) $(SRC) $(LFLAGS) $(CFLAGS)
