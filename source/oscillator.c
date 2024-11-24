@@ -1,25 +1,40 @@
 #include "oscillator.h"
 #include <math.h>
-#include <string.h>
 
 void cycle_wavetable(Oscillator *osc) {
-    if (strcmp(osc->wt_name, "sine") == 0) {
-        osc->wt_name = "triangle";
+    if (osc->play == sine_wave) {
         osc->play = triangle_wave;
-    } else if (strcmp(osc->wt_name, "triangle") == 0) {
+        osc->wt_name = "triangle";
+    } else if (osc->play == triangle_wave) {
+        osc->play = saw_wave;
+        osc->wt_name = "saw";
+    } else if (osc->play == saw_wave) {
+        osc->play = square_wave;
+        osc->wt_name = "square";
+    } else {
+        osc->play = sine_wave;
         osc->wt_name = "sine";
-        osc->play = sin_wave;
     }
 }
 
-// Wavetable algos
-int16_t sin_wave(const float phase, const int32_t amp) {
-    return (int16_t)(amp * sinf(2.0f * M_PI * phase));
+int16_t sine_wave(const float phase, const int32_t amp) {
+    const float x = sinf(2.0f * M_PI * phase);
+    return (int16_t)(amp * x);
 }
 
 int16_t triangle_wave(const float phase, const int32_t amp) {
-    const float t = 2.0f * fabs(2.0f * (phase - floorf(phase + 0.5f))) - 1.0f;
-    return (int16_t)(amp * t);
+    const float x = 4.0f * fabs(phase - floorf(phase + 0.75f) + 0.25f) - 1.0f;
+    return (int16_t)(amp * x);
+}
+
+int16_t saw_wave(const float phase, const int32_t amp) {
+    const float x = 2.0f * (phase - floorf(phase + 0.5f));
+    return (int16_t)(amp * x);
+}
+
+int16_t square_wave(const float phase, const int32_t amp) {
+    const float x = 4.0f * floorf(phase) - 2.0f * floorf(2.0f * phase) + 1.0f;
+    return (int16_t)(amp * x);
 }
 
 /*int32_t envelope(const float attack, const float decay, const float sustain,*/

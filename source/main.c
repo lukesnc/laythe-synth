@@ -19,10 +19,9 @@
 #define MAX_OSCILLATORS (2)
 #define MAX_RECORDING_SIZE (120 * SAMPLE_RATE * (BIT_DEPTH / 8 * CHANNELS))
 
-// Current midi
+// Current notes & midi
 static uint8_t active_notes[MAX_VOICES] = {0};
 static uint8_t active_note_count = 0;
-
 float freq_from_midi(const uint8_t note) {
     return 440.0f * pow(2.0f, (note - 69) / 12.0f);
 }
@@ -45,7 +44,7 @@ void record_sample(const int16_t sample) {
 }
 
 // Audio stream callback
-static Oscillator oscA = {false, 1.0f, "sine", sin_wave};
+static Oscillator oscA = {false, 1.0f, "sine", sine_wave};
 static Oscillator oscB = {true, 1.0f, "triangle", triangle_wave};
 void audio_callback(void *buffer, uint32_t frames) {
     // Track phase for each voice

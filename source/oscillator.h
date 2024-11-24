@@ -17,8 +17,10 @@ typedef struct {
 
 void cycle_wavetable(Oscillator *osc);
 
-// Wavetable algos
-int16_t sin_wave(const float phase, const int32_t amp);
+// Wavetable algorithms
+int16_t sine_wave(const float phase, const int32_t amp);
 int16_t triangle_wave(const float phase, const int32_t amp);
+int16_t saw_wave(const float phase, const int32_t amp);
+int16_t square_wave(const float phase, const int32_t amp);
 
 #endif // OSCILLATOR_H
