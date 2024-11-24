@@ -7,7 +7,7 @@ ifeq ($(origin WSL), undefined)
 else
 	CC=x86_64-w64-mingw32-gcc
 	INCLUDES=-Iraylib-5.5_win64_mingw-w64/include
-	LFLAGS=-lm -Lraylib-5.5_win64_mingw-w64/lib -lraylib 
+	LFLAGS=-lm -Lraylib-5.5_win64_mingw-w64/lib -lraylib -lwinmm -lgdi32
 	APP=laythe.exe
 endif
 

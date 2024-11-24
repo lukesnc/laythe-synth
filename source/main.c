@@ -3,7 +3,6 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/soundcard.h>
 #include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
@@ -41,7 +40,11 @@ void record_sample(const int16_t sample) {
             // Make recordings dir
             struct stat st = {0};
             if (stat("recordings", &st) == -1) {
+#ifdef _WIN32
+                mkdir("recordings");
+#else
                 mkdir("recordings", 0700);
+#endif
             }
 
             char filename[40];
@@ -216,10 +219,6 @@ int main(int argc, char *argv[]) {
             }
         } else {
             // Fetch midi notes
-            read(midi_fd, &midi_data_in, sizeof(midi_data_in));
-            if (midi_data_in[0] == SEQ_MIDIPUTC) {
-                printf("received MIDI byte: %d\n", midi_data_in[1]);
-            }
         }
 
         // Toggle recording with R
