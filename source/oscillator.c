@@ -1,4 +1,5 @@
 #include "oscillator.h"
+
 #include <math.h>
 
 void cycle_wavetable(Oscillator *osc) {

@@ -44,8 +44,10 @@ void record_sample(const int16_t sample) {
 }
 
 // Audio stream callback
-static Oscillator oscA = {false, 1.0f, "sine", sine_wave};
-static Oscillator oscB = {true, 1.0f, "triangle", triangle_wave};
+static Oscillator oscs[MAX_OSCILLATORS] = {
+    {false, 1.0f, "sine", sine_wave},
+    {true, 1.0f, "triangle", triangle_wave},
+};
 void audio_callback(void *buffer, uint32_t frames) {
     // Track phase for each voice
     static float phases[MAX_VOICES] = {0.0f};
@@ -59,13 +61,14 @@ void audio_callback(void *buffer, uint32_t frames) {
         int32_t sample = 0;
 
         // Sum all active notes on all oscillators
-        for (uint8_t n = 0; n < active_note_count; n++) {
+        for (size_t n = 0; n < active_note_count; n++) {
             const float freq = freq_from_midi(active_notes[n]);
 
-            if (oscA.enabled)
-                sample += oscA.play(phases[n], amp * oscA.level);
-            if (oscB.enabled)
-                sample += oscB.play(phases[n], amp * oscB.level);
+            for (size_t o = 0; o < MAX_OSCILLATORS; o++) {
+                if (oscs[o].enabled) {
+                    sample += oscs[o].play(phases[n], amp * oscs[o].level);
+                }
+            }
 
             // Update phase
             phases[n] += freq / SAMPLE_RATE;
@@ -92,7 +95,7 @@ int main(int argc, char *argv[]) {
     bool use_keyboard = false;
     const char *midi_dev = NULL;
 
-    for (int i = 1; i < argc; i++) {
+    for (int32_t i = 1; i < argc; i++) {
         if (strcmp(argv[i], "--dev") == 0) {
             if (i + 1 >= argc) {
                 fprintf(stderr, "error: --dev flag requires a device path\n");
@@ -214,43 +217,49 @@ int main(int argc, char *argv[]) {
 
         const Vector2 mouse_pos = GetMousePosition();
 
-        // Osc A options
-        DrawRectangle(10, 10, 60, 35, WHITE);
-        DrawText("oscA", 15, 15, 20, BLACK);
+        // Display oscillator options
+        uint32_t posY = 10;
+        for (size_t i = 0; i < MAX_OSCILLATORS; i++) {
+            // Oscillator name
+            DrawRectangle(10, posY, 60, 35, WHITE);
+            char name[5] = "osc";
+            char idx[2];
+            sprintf(idx, "%ld", i);
+            strcat(name, idx);
+            DrawText(name, 15, posY + 5, 20, BLACK);
 
-        const Rectangle oscA_enabled = {80, 10, 35, 35};
-        DrawRectangleRec(oscA_enabled, oscA.enabled ? GREEN : RED);
-        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
-            CheckCollisionPointRec(mouse_pos, oscA_enabled)) {
-            oscA.enabled = !oscA.enabled;
-        };
+            // Enabled button
+            const Rectangle osc_enabled = {80, posY, 35, 35};
+            DrawRectangleRec(osc_enabled, oscs[i].enabled ? GREEN : RED);
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
+                CheckCollisionPointRec(mouse_pos, osc_enabled)) {
+                oscs[i].enabled = !oscs[i].enabled;
+            };
 
-        const Rectangle oscA_wavetable = {125, 10, 100, 35};
-        DrawRectangleRec(oscA_wavetable, WHITE);
-        DrawText(oscA.wt_name, 130, 15, 20, BLACK);
-        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
-            CheckCollisionPointRec(mouse_pos, oscA_wavetable)) {
-            cycle_wavetable(&oscA);
-        };
+            // Wavetable name
+            const Rectangle osc_wavetable = {125, posY, 100, 35};
+            DrawRectangleRec(osc_wavetable, WHITE);
+            DrawText(oscs[i].wt_name, 130, posY + 5, 20, BLACK);
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
+                CheckCollisionPointRec(mouse_pos, osc_wavetable)) {
+                cycle_wavetable(&oscs[i]);
+            };
 
-        // Osc B options
-        DrawRectangle(10, 50, 60, 35, WHITE);
-        DrawText("oscB", 15, 55, 20, BLACK);
+            // Oscillator level
+            const Rectangle osc_level = {235, posY, 50, 35};
+            DrawRectangleRec(osc_level, WHITE);
+            char textbuf[10];
+            sprintf(textbuf, "%0.2f", oscs[i].level);
+            DrawText(textbuf, 240, posY + 5, 20, BLACK);
+            if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) &&
+                CheckCollisionPointRec(mouse_pos, osc_level)) {
+                oscs[i].level += 0.01;
+                if (oscs[i].level > 1.0f)
+                    oscs[i].level -= 1.0f;
+            };
 
-        const Rectangle oscB_enabled = {80, 50, 35, 35};
-        DrawRectangleRec(oscB_enabled, oscB.enabled ? GREEN : RED);
-        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
-            CheckCollisionPointRec(mouse_pos, oscB_enabled)) {
-            oscB.enabled = !oscB.enabled;
-        };
-
-        const Rectangle oscB_wavetable = {125, 50, 100, 35};
-        DrawRectangleRec(oscB_wavetable, WHITE);
-        DrawText(oscB.wt_name, 130, 55, 20, BLACK);
-        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
-            CheckCollisionPointRec(mouse_pos, oscB_wavetable)) {
-            cycle_wavetable(&oscB);
-        };
+            posY += 40;
+        }
 
         EndDrawing();
     }
