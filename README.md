@@ -8,7 +8,7 @@ Layhte uses a simple UI to control paramaters such as enabling/disabling oscilla
 
 ### Recording
 
-Laythe can toggle recording the current session by pressing R. Files are saved in WAV format to `recordings/` in this directory.
+Laythe can toggle recording the current session by pressing R or pressing the red recording button. Files are saved in WAV format to `recordings/` in this directory.
 
 ## Build and Run
 
