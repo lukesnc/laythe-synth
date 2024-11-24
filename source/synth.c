@@ -38,10 +38,10 @@ int16_t square_wave(const float phase, const int32_t amp) {
     return (int16_t)(amp * x);
 }
 
-int16_t lowpass(const int16_t x) {
+int16_t lowpass(const int16_t sample, const float cutoff) {
     static int16_t prev = 0;
-    const int16_t y = (x + prev) / 2;
-    prev = x;
+    const int16_t y = (sample + prev) / 2;
+    prev = sample;
     return y;
 }
 

@@ -24,6 +24,6 @@ int16_t saw_wave(const float phase, const int32_t amp);
 int16_t square_wave(const float phase, const int32_t amp);
 
 // Filters
-int16_t lowpass(const int16_t x);
+int16_t lowpass(const int16_t sample, const float cutoff);
 
 #endif // SYNTH_H
