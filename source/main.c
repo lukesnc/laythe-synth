@@ -2,17 +2,15 @@
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <sys/soundcard.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
 
 #include "raylib.h"
 
-#include "oscillator.h"
+#include "synth.h"
 #include "wav.h"
 
 #define SAMPLE_RATE (44100)
@@ -69,7 +67,7 @@ void audio_callback(void *buffer, uint32_t frames) {
     static float phases[MAX_VOICES] = {0.0f};
 
     // TODO: stop using global amplitude
-    const float amp = 20000.0f;
+    const float amp = 10000.0f;
 
     // Put data in stream
     int16_t *d = (int16_t *)buffer;
@@ -78,7 +76,8 @@ void audio_callback(void *buffer, uint32_t frames) {
 
         // Sum all active notes on all oscillators
         for (size_t n = 0; n < active_note_count; n++) {
-            const float freq = freq_from_midi(active_notes[n]);
+            // Apply slight detune for phasing
+            const float freq = freq_from_midi(active_notes[n]) + (0.01f * n);
 
             for (size_t o = 0; o < MAX_OSCILLATORS; o++) {
                 if (oscs[o].enabled) {
