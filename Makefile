@@ -1,18 +1,13 @@
 CC=gcc
 CFLAGS=-Wall -Wextra
-INCLUDES=
 LFLAGS=-lm -lraylib
 
 APP=laythe
 SRC=source/main.c source/oscillator.c
 
 all: $(SRC)
-	mkdir -p target
-	$(CC) -o target/$(APP) $(SRC) $(INCLUDES) $(LFLAGS) $(CFLAGS)
+	$(CC) -o $(APP) $(SRC) $(LFLAGS) $(CFLAGS)
 
-.PHONY: clean run
+.PHONY: clean
 clean:
-	rm -rf target/
-
-run: all
-	./target/$(APP) $(ARGS)
+	rm -f $(APP)
