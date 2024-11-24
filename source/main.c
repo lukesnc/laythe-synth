@@ -221,12 +221,6 @@ int main(int argc, char *argv[]) {
             // Fetch midi notes
         }
 
-        // Toggle recording with R
-        if (IsKeyPressed(KEY_R)) {
-            recording = !recording;
-            printf(recording ? "Recording started\n" : "Recording stopped\n");
-        }
-
         // ---- Draw -----
         BeginDrawing();
 
@@ -279,6 +273,19 @@ int main(int argc, char *argv[]) {
 
             posY += 40;
         }
+
+        // Draw recording button
+        const Rectangle record_button = {305, 10, 35, 35};
+        DrawRectangleRec(record_button, recording ? RED : MAROON);
+        DrawText("R", 310, 15, 20, BLACK);
+
+        // Toggle recording with R or on-screen button
+        if ((IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
+             CheckCollisionPointRec(mouse_pos, record_button)) ||
+            IsKeyPressed(KEY_R)) {
+            recording = !recording;
+            printf(recording ? "Recording started\n" : "Recording stopped\n");
+        };
 
         // Draw filter controls
         const Rectangle filter = {10, 160, 100, 35};
