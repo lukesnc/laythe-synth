@@ -12,11 +12,17 @@ Laythe can toggle recording the current session by pressing R. Files are saved i
 
 ## Build and Run
 
-Retrieve the following dependencies:
+Clone this repositroy and retrieve the following dependencies:
 
 - [raylib](https://github.com/raysan5/raylib)
 
-Clone this repository, then
+To cross compile for Windows from WSL:
+
+```bash
+make WSL= && ./laythe.exe [--dev /dev/<midi_controller>] [--keyboard]
+```
+
+To compile natively for Linux:
 
 ```bash
 make && ./laythe [--dev /dev/<midi_controller>] [--keyboard]
