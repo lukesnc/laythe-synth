@@ -188,7 +188,7 @@ bool write_wav_file(const char *filename, const uint8_t *buffer,
   build_wav_header(&header, samples);
 
   // Write file
-  FILE *f = fopen(filename, "w");
+  FILE *f = fopen(filename, "wb");
   if (f == NULL) {
     perror("error opening file");
     return false;
