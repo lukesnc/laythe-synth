@@ -5,6 +5,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/soundcard.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "raylib.h"
@@ -37,7 +40,20 @@ void record_sample(const int16_t sample) {
         rec_playhead++;
     } else {
         if (rec_playhead > 0) {
-            write_wav_file("recording.wav", rec_buffer, rec_playhead);
+            // Make recordings dir
+            struct stat st = {0};
+            if (stat("recordings", &st) == -1) {
+                mkdir("recordings", 0700);
+            }
+
+            char filename[40];
+            const struct tm *timenow;
+            const time_t now = time(NULL);
+            timenow = gmtime(&now);
+            strftime(filename, sizeof(filename),
+                     "recordings/laythe-%y%m%d_%H%M.wav", timenow);
+
+            write_wav_file(filename, rec_buffer, rec_playhead);
             rec_playhead = 0;
         }
     }
@@ -205,11 +221,7 @@ int main(int argc, char *argv[]) {
         // Toggle recording with R
         if (IsKeyPressed(KEY_R)) {
             recording = !recording;
-            if (recording) {
-                printf("Recording started\n");
-            } else {
-                printf("Recording stopped\n");
-            }
+            printf(recording ? "Recording started\n" : "Recording stopped\n");
         }
 
         // ---- Draw -----
@@ -217,7 +229,7 @@ int main(int argc, char *argv[]) {
 
         const Vector2 mouse_pos = GetMousePosition();
 
-        // Display oscillator options
+        // Draw oscillator options
         uint32_t posY = 10;
         for (size_t i = 0; i < MAX_OSCILLATORS; i++) {
             // Oscillator name
