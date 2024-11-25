@@ -1,5 +1,10 @@
+#include "midi.h"
+#include "synth.h"
+#include "wav.h"
+
+#include "raylib.h"
+
 #include <fcntl.h>
-#include <math.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -7,30 +12,17 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "raylib.h"
-
-#include "synth.h"
-#include "wav.h"
-
 #define SAMPLE_RATE (44100)
 #define CHANNELS (1)
 #define BIT_DEPTH (16)
 #define MAX_VOICES (8)
 
-// Current notes & midi
+// --- Current notes & midi ---
 static uint8_t active_notes[MAX_VOICES] = {0};
 static uint8_t active_note_count = 0;
 static int8_t octave_shift = 0;
 
-float freq_from_midi(const uint8_t note) {
-    return 440.0f * powf(2.0f, (note - 69) / 12.0f);
-}
-
-float freq_with_cents(const float base_freq, const int8_t cents) {
-    return base_freq * powf(2.0f, cents / 1200.0f);
-}
-
-// Recording
+// --- Recording ---
 #define MAX_RECORDING_SIZE (120 * SAMPLE_RATE * (BIT_DEPTH / 8 * CHANNELS))
 
 static bool recording = false;
@@ -67,7 +59,7 @@ void record_sample(const int16_t sample) {
     }
 }
 
-// Audio stream callback
+// --- Oscillators ---
 #define NUM_OSCILLATORS (2)
 
 static Oscillator oscs[NUM_OSCILLATORS] = {
@@ -75,11 +67,13 @@ static Oscillator oscs[NUM_OSCILLATORS] = {
     {false, 1.0f, 0, "sine", sine_wave},
 };
 
+// --- Filter ---
 #define FILTER_CUTOFF_MAX (8000)
 
 static bool filtering = false;
 static float filter_cutoff = 1000.0f;
 
+// --- Audio stream callback ---
 void audio_callback(void *buffer, uint32_t frames) {
     // Track phase for each voice
     static float phases[MAX_VOICES] = {0.0f};
@@ -333,13 +327,11 @@ int main(int argc, char *argv[]) {
         DrawText(cutoff, 125, 165, 20, BLACK);
         if (CheckCollisionPointRec(mouse_pos, filter_cutoff_rec)) {
             if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
-                if (!(filter_cutoff >= FILTER_CUTOFF_MAX)) {
+                if (!(filter_cutoff >= FILTER_CUTOFF_MAX))
                     filter_cutoff += 50;
-                }
             } else if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
-                if (!(filter_cutoff <= 0)) {
+                if (!(filter_cutoff <= 0))
                     filter_cutoff -= 50;
-                }
             }
         }
 
