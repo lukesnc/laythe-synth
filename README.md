@@ -14,4 +14,17 @@ Laythe can toggle recording the current session by pressing R or pressing the re
 
 ## Build and Run
 
-TODO
+Clone this repository and build [raylib](https://github.com/raysan5/raylib) with:
+
+```bash
+git clone --recurse-submodules https://github.com/lukesnc/laythe-synth.git
+cd laythe-synth/thirdparty/raylib/src/
+make
+cd ../../../
+```
+
+Now build and run Laythe with:
+
+```bash
+make && ./laythe
+```
