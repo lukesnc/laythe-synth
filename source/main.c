@@ -198,6 +198,7 @@ int main(int argc, char *argv[]) {
             fprintf(stderr, "error: cannot open %s\n", midi_dev);
             return 1;
         }
+        printf("Successfully connected to %s\n", midi_dev);
 
         // Start thread
         pthread_t midi_thread;
