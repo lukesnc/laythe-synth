@@ -28,3 +28,18 @@ Now build and run Laythe with:
 ```bash
 make && ./laythe
 ```
+
+## Usage
+
+```
+./laythe -h
+usage: ./laythe [--dev /dev/<midi_controller>] [--keyboard]
+```
+
+The default MIDI device that is checked for is `/dev/snd/seq`. This can be overridden by passing a device with `--dev`.
+
+## TODO
+
+- Add envelope generators so notes aren't just 100% on or off.
+- Add more wavetable algorithms.
+- Improve UI aesthetic.
