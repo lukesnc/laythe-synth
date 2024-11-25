@@ -2,6 +2,8 @@
 
 Laythe is a dual oscillator standalone polyphonic synthesizer, up to 8 voices.
 
+![Screenshot](images/screenshot.png)
+
 ## Features
 
 Layhte uses a simple UI to control paramaters such as enabling/disabling oscillators, selecting wavetables, changing oscillator volume, and more. Layhte can be controlled with a USB MIDI controller or your computer's keyboard (by passing the `--keyboard` option).
