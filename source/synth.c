@@ -39,10 +39,11 @@ int16_t square_wave(const float phase, const int32_t amp) {
 }
 
 int16_t lowpass(const int16_t sample, const float cutoff) {
-    static int16_t prev = 0;
-    const int16_t y = (sample + prev) / 2;
-    prev = sample;
-    return y;
+    static float prev = 0.0f;
+    const float a = 2.0f * M_PI * cutoff / (44100.0f + 2.0f * M_PI * cutoff);
+    const float y = a * sample + (1.0f - a) * prev;
+    prev = y;
+    return (int16_t)y;
 }
 
 /*int32_t envelope(const float attack, const float decay, const float sustain,*/

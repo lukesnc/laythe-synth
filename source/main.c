@@ -16,8 +16,6 @@
 #define CHANNELS (1)
 #define BIT_DEPTH (16)
 #define MAX_VOICES (8)
-#define MAX_OSCILLATORS (2)
-#define MAX_RECORDING_SIZE (120 * SAMPLE_RATE * (BIT_DEPTH / 8 * CHANNELS))
 
 // Current notes & midi
 static uint8_t active_notes[MAX_VOICES] = {0};
@@ -33,7 +31,10 @@ float freq_from_cents(const int8_t cents, const float base_freq) {
 }
 
 // Recording
+#define MAX_RECORDING_SIZE (120 * SAMPLE_RATE * (BIT_DEPTH / 8 * CHANNELS))
+
 static bool recording = false;
+
 void record_sample(const int16_t sample) {
     static uint8_t rec_buffer[MAX_RECORDING_SIZE];
     static uint32_t rec_playhead = 0;
@@ -67,12 +68,18 @@ void record_sample(const int16_t sample) {
 }
 
 // Audio stream callback
-static Oscillator oscs[MAX_OSCILLATORS] = {
+#define NUM_OSCILLATORS (2)
+
+static Oscillator oscs[NUM_OSCILLATORS] = {
     {true, 1.0f, 0, "triangle", triangle_wave},
     {false, 1.0f, 0, "sine", sine_wave},
 };
+
+#define FILTER_CUTOFF_MAX (8000)
+
 static bool filtering = false;
 static float filter_cutoff = 1000.0f;
+
 void audio_callback(void *buffer, uint32_t frames) {
     // Track phase for each voice
     static float phases[MAX_VOICES] = {0.0f};
@@ -90,7 +97,7 @@ void audio_callback(void *buffer, uint32_t frames) {
             float freq = freq_from_midi(active_notes[n]);
             freq += (0.01f * n); // Apply slight detune for phasing
 
-            for (size_t o = 0; o < MAX_OSCILLATORS; o++) {
+            for (size_t o = 0; o < NUM_OSCILLATORS; o++) {
                 if (oscs[o].enabled) {
                     freq = freq_from_cents(oscs[o].fine_tune, freq);
                     sample += oscs[o].play(phases[n], amp * oscs[o].level);
@@ -104,7 +111,7 @@ void audio_callback(void *buffer, uint32_t frames) {
         }
 
         if (filtering) {
-            sample = lowpass(sample, 400.0f);
+            sample = lowpass(sample, filter_cutoff);
         }
 
         // Check bounds of signed 16-bit sample
@@ -238,7 +245,7 @@ int main(int argc, char *argv[]) {
 
         // Draw oscillator controls
         uint32_t posY = 10;
-        for (uint32_t i = 0; i < MAX_OSCILLATORS; i++) {
+        for (uint32_t i = 0; i < NUM_OSCILLATORS; i++) {
             // Oscillator name
             DrawRectangle(10, posY, 60, 35, WHITE);
             char name[5] = "osc";
@@ -350,14 +357,12 @@ int main(int argc, char *argv[]) {
         DrawText(cutoff, 125, 165, 20, BLACK);
         if (CheckCollisionPointRec(mouse_pos, filter_cutoff_rec)) {
             if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
-                filter_cutoff += 100;
-                if (filter_cutoff > 16000) {
-                    filter_cutoff -= 16000;
+                if (!(filter_cutoff >= FILTER_CUTOFF_MAX)) {
+                    filter_cutoff += 50;
                 }
             } else if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
-                filter_cutoff -= 10;
-                if (filter_cutoff < 0) {
-                    filter_cutoff += 16000;
+                if (!(filter_cutoff <= 0)) {
+                    filter_cutoff -= 50;
                 }
             }
         }
