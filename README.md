@@ -2,7 +2,7 @@
 
 Laythe is a dual oscillator standalone polyphonic synthesizer, up to 8 voices.
 
-![Screenshot](images/screenshot.jpg)
+![Screenshot](images/screenshot.png)
 
 ## Features
 
