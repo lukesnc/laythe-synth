@@ -5,9 +5,12 @@ ifeq ($(origin WSL), undefined)
 	LFLAGS=-lm -lraylib
 	APP=laythe
 else
+	# Locate downloaded libraries
+	RAYLIB=$(wildcard raylib*)
+
 	CC=x86_64-w64-mingw32-gcc
-	INCLUDES=-Iraylib-5.5_win64_mingw-w64/include
-	LFLAGS=-lm -Lraylib-5.5_win64_mingw-w64/lib -lraylib -lwinmm -lgdi32
+	INCLUDES=-I$(RAYLIB)/include
+	LFLAGS=-lm -L$(RAYLIB)/lib -lraylib -lwinmm -lgdi32
 	APP=laythe.exe
 endif
 
