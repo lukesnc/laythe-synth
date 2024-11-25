@@ -43,3 +43,8 @@ The default MIDI device that is checked for is `/dev/snd/seq`. This can be overr
 - Add envelope generators so notes aren't just 100% on or off.
 - Add more wavetable algorithms.
 - Improve UI aesthetic.
+
+## Resources
+
+- <https://ccrma.stanford.edu/~craig/articles/linuxmidi/>
+- <https://en.wikipedia.org/wiki/Triangle_wave>
