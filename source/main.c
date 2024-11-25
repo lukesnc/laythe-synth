@@ -26,7 +26,7 @@ float freq_from_midi(const uint8_t note) {
     return 440.0f * powf(2.0f, (note - 69) / 12.0f);
 }
 
-float freq_from_cents(const int8_t cents, const float base_freq) {
+float freq_with_cents(const float base_freq, const int8_t cents) {
     return base_freq * powf(2.0f, cents / 1200.0f);
 }
 
@@ -99,7 +99,8 @@ void audio_callback(void *buffer, uint32_t frames) {
 
             for (size_t o = 0; o < NUM_OSCILLATORS; o++) {
                 if (oscs[o].enabled) {
-                    freq = freq_from_cents(oscs[o].fine_tune, freq);
+                    // FIXME: freq change shouldnt be affecting all voices
+                    freq = freq_with_cents(freq, oscs[o].fine_tune);
                     sample += oscs[o].play(phases[n], amp * oscs[o].level);
                 }
             }
@@ -131,42 +132,17 @@ void audio_callback(void *buffer, uint32_t frames) {
 int main(int argc, char *argv[]) {
     // Parse args
     bool use_keyboard = false;
-    const char *midi_dev = NULL;
-
     for (int32_t i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "--dev") == 0) {
-            if (i + 1 >= argc) {
-                fprintf(stderr, "error: --dev flag requires a device path\n");
-                return 1;
-            } else {
-                midi_dev = argv[i + 1];
-                i++;
-            }
-        } else if (strcmp(argv[i], "--keyboard") == 0) {
+        if (strcmp(argv[i], "--keyboard") == 0) {
             use_keyboard = 1;
         } else {
-            fprintf(stderr,
-                    "usage: %s [--dev /dev/<midi_controller>] [--keyboard]\n",
-                    argv[0]);
+            fprintf(stderr, "usage: %s [--keyboard]\n", argv[0]);
             return 1;
         }
     }
 
-    // Use default value if empty
-    midi_dev = (midi_dev != NULL) ? midi_dev : "/dev/snd/seq";
-
-    // Set up midi
-    int midi_fd;
-    uint8_t midi_data_in[4];
-
+    // Init midi
     if (!use_keyboard) {
-        // Open midi device
-        midi_fd = open(midi_dev, O_RDONLY);
-        if (midi_fd < 0) {
-            fprintf(stderr, "error: cannot open %s\n", midi_dev);
-            return 1;
-        }
-        printf("Connected to MIDI device %s\n", midi_dev);
     }
 
     // Raylib window init
