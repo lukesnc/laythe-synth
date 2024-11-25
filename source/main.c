@@ -1,10 +1,10 @@
-#include "midi.h"
 #include "synth.h"
 #include "wav.h"
 
 #include "raylib.h"
 
 #include <fcntl.h>
+#include <pthread.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -17,10 +17,50 @@
 #define BIT_DEPTH (16)
 #define MAX_VOICES (8)
 
-// --- Current notes & midi ---
+// --- Current notes ---
 static uint8_t active_notes[MAX_VOICES] = {0};
 static uint8_t active_note_count = 0;
 static int8_t octave_shift = 0;
+
+// --- Fetching midi ---
+static int32_t midi_fd;
+void *fetch_midi() {
+    uint8_t inbytes[4];
+    int32_t status;
+
+    while (1) {
+        status = read(midi_fd, &inbytes, sizeof(inbytes));
+        if (status < 0) {
+            fprintf(stderr, "error reading midi\n");
+            return NULL;
+        }
+
+        // Note on
+        if (inbytes[0] == 0x90) {
+            // Fetch note and apply octave shift
+            uint8_t note = inbytes[1];
+            note = note + (12 * octave_shift);
+
+            for (uint8_t i = 0; i < MAX_VOICES; i++) {
+                // Note already on
+                if (active_notes[i] == note)
+                    break;
+
+                if (active_notes[i] == 0) {
+                    active_notes[i] = note;
+                    active_note_count++;
+                    break;
+                }
+            }
+        }
+
+        // Clear note on release
+        if (inbytes[0] == 0x80) {
+            memset(active_notes, 0, sizeof(active_notes));
+            active_note_count = 0;
+        }
+    }
+}
 
 // --- Recording ---
 #define MAX_RECORDING_SIZE (120 * SAMPLE_RATE * (BIT_DEPTH / 8 * CHANNELS))
@@ -126,17 +166,42 @@ void audio_callback(void *buffer, uint32_t frames) {
 int main(int argc, char *argv[]) {
     // Parse args
     bool use_keyboard = false;
+    const char *midi_dev = NULL;
+
     for (int32_t i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "--keyboard") == 0) {
-            use_keyboard = 1;
+        if (strcmp(argv[i], "--dev") == 0) {
+            if (i + 1 >= argc) {
+                fprintf(stderr, "error: --dev flag requires a device path\n");
+                return 1;
+            } else {
+                midi_dev = argv[i + 1];
+                i++;
+            }
+        } else if (strcmp(argv[i], "--keyboard") == 0) {
+            use_keyboard = true;
         } else {
-            fprintf(stderr, "usage: %s [--keyboard]\n", argv[0]);
+            fprintf(stderr,
+                    "usage: %s [--dev /dev/<midi_controller>] [--keyboard]\n",
+                    argv[0]);
             return 1;
         }
     }
 
+    // Use default value if empty
+    midi_dev = (midi_dev != NULL) ? midi_dev : "/dev/snd/seq";
+
     // Init midi
     if (!use_keyboard) {
+        // Open midi device
+        midi_fd = open(midi_dev, O_RDONLY);
+        if (midi_fd == -1) {
+            fprintf(stderr, "error: cannot open %s\n", midi_dev);
+            return 1;
+        }
+
+        // Start thread
+        pthread_t midi_thread;
+        pthread_create(&midi_thread, NULL, fetch_midi, NULL);
     }
 
     // Raylib window init
@@ -156,7 +221,7 @@ int main(int argc, char *argv[]) {
 
     // Event loop
     while (!WindowShouldClose()) {
-        // Get current notes (either keyboard or midi)
+        // Get current notes  if using keyboard
         if (use_keyboard) {
             for (uint8_t key = 0; key < 255; key++) {
                 uint8_t note = 0;
@@ -181,10 +246,11 @@ int main(int argc, char *argv[]) {
                     default: continue;
                 } // clang-format on
 
-                note = note + (12 * octave_shift);
-
                 // Add all depressed keys to active notes
                 if (IsKeyDown(key)) {
+                    // Apply octave shift
+                    note = note + (12 * octave_shift);
+
                     for (uint8_t i = 0; i < MAX_VOICES; i++) {
                         // Note already on
                         if (active_notes[i] == note)
@@ -204,8 +270,6 @@ int main(int argc, char *argv[]) {
                     active_note_count = 0;
                 }
             }
-        } else {
-            // Fetch midi notes
         }
 
         // ---- Draw -----
@@ -215,12 +279,12 @@ int main(int argc, char *argv[]) {
 
         // Draw oscillator controls
         uint32_t posY = 10;
-        for (uint32_t i = 0; i < NUM_OSCILLATORS; i++) {
+        for (size_t i = 0; i < NUM_OSCILLATORS; i++) {
             // Oscillator name
             DrawRectangle(10, posY, 60, 35, WHITE);
             char name[5] = "osc";
             char idx[2];
-            sprintf(idx, "%d", i);
+            sprintf(idx, "%ld", i);
             strcat(name, idx);
             DrawText(name, 15, posY + 5, 20, BLACK);
 
@@ -347,5 +411,6 @@ int main(int argc, char *argv[]) {
     UnloadAudioStream(stream);
     CloseAudioDevice();
     CloseWindow();
+    close(midi_fd);
     return 0;
 }

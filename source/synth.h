@@ -27,4 +27,8 @@ int16_t square_wave(const float phase, const int32_t amp);
 // Filters
 int16_t lowpass(const int16_t sample, const float cutoff);
 
+// Helper funcs
+float freq_from_midi(const uint8_t note);
+float freq_with_cents(const float base_freq, const int8_t cents);
+
 #endif // SYNTH_H

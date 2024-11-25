@@ -3,7 +3,7 @@ CFLAGS=-Wall -Wextra
 
 RAYLIB=thirdparty/raylib/src
 INCLUDES=-I$(RAYLIB)
-LFLAGS=-lm -L$(RAYLIB) -lraylib
+LFLAGS=-lm -lpthread -L$(RAYLIB) -lraylib
 
 APP=laythe
 SRC=$(wildcard source/*.c)
