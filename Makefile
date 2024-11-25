@@ -1,20 +1,11 @@
-# Check if cross-compiling for Windows from WSL
-ifeq ($(origin WSL), undefined)
-	CC=gcc
-	INCLUDES=
-	LFLAGS=-lm -lraylib
-	APP=laythe
-else
-	# Locate downloaded libraries
-	RAYLIB=$(wildcard raylib*)
-
-	CC=x86_64-w64-mingw32-gcc
-	INCLUDES=-I$(RAYLIB)/include
-	LFLAGS=-lm -L$(RAYLIB)/lib -lraylib -lwinmm -lgdi32
-	APP=laythe.exe
-endif
-
+CC=gcc
 CFLAGS=-Wall -Wextra
+
+RAYLIB=thirdparty/raylib/src
+INCLUDES=-I$(RAYLIB)
+LFLAGS=-lm -L$(RAYLIB) -lraylib
+
+APP=laythe
 SRC=$(wildcard source/*.c)
 
 all: $(SRC)
