@@ -355,24 +355,28 @@ int main(int argc, char *argv[]) {
         }
 
         // Draw octave + / - buttons
-        DrawRectangle(50, 105, 45, 35, WHITE);
-        DrawText("oct", 55, 110, 20, BLACK);
-        const Rectangle octave_plus_rec = {100, 105, 35, 35};
+        DrawRectangle(50, 105, 65, 35, WHITE);
+        char oct[6];
+        sprintf(oct, "oct%d", octave_shift);
+        DrawText(oct, 55, 110, 20, BLACK);
+        const Rectangle octave_plus_rec = {125, 105, 35, 35};
         DrawRectangleRec(octave_plus_rec, WHITE);
-        DrawText("+", 105, 110, 20, BLACK);
-        const Rectangle octave_minus_rec = {140, 105, 35, 35};
+        DrawText("+", 130, 110, 20, BLACK);
+        const Rectangle octave_minus_rec = {165, 105, 35, 35};
         DrawRectangleRec(octave_minus_rec, WHITE);
-        DrawText("-", 145, 110, 20, BLACK);
+        DrawText("-", 170, 110, 20, BLACK);
 
         // Check octave shift
         if ((IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
              CheckCollisionPointRec(mouse_pos, octave_minus_rec)) ||
             IsKeyPressed(KEY_MINUS)) {
-            octave_shift--;
+            if (!(octave_shift <= -4))
+                octave_shift--;
         } else if ((IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
                     CheckCollisionPointRec(mouse_pos, octave_plus_rec)) ||
                    IsKeyPressed(KEY_EQUAL)) {
-            octave_shift++;
+            if (!(octave_shift >= 4))
+                octave_shift++;
         }
 
         // Draw filter controls
