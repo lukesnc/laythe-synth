@@ -20,6 +20,9 @@ void cycle_wavetable(Oscillator *osc) {
     } else if (osc->play == saw_wave) {
         osc->play = square_wave;
         osc->wt_name = "square";
+    } else if (osc->play == square_wave) {
+        osc->play = pulse_wave;
+        osc->wt_name = "pulse";
     } else {
         osc->play = sine_wave;
         osc->wt_name = "sine";
@@ -46,6 +49,12 @@ int16_t square_wave(const float phase, const int32_t amp) {
     return (int16_t)(amp * x);
 }
 
+int16_t pulse_wave(const float phase, const int32_t amp) {
+    const float duty = 0.9f;
+    const float x = (fmodf(phase, 1.0f) < duty) ? 1.0f : -1.0f;
+    return (int16_t)(amp * x);
+}
+
 int16_t lowpass(const int16_t sample, const float cutoff) {
     static float prev = 0.0f;
     const float a = 2.0f * M_PI * cutoff / (44100.0f + 2.0f * M_PI * cutoff);
@@ -53,9 +62,3 @@ int16_t lowpass(const int16_t sample, const float cutoff) {
     prev = y;
     return (int16_t)y;
 }
-
-/*int32_t envelope(const float attack, const float decay, const float sustain,*/
-/*                 const float release) {}*/
-
-// Envelope generators
-// TODO
