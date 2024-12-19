@@ -22,7 +22,7 @@ jobs:
     - name: Build raylib
       run: cd thirdparty/raylib/src/ && make && cd ../../../
 
-    - name: Run
+    - name: Build laythe
       run: make
 
     - name: Upload binary
