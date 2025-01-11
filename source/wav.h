@@ -61,6 +61,7 @@ static inline bool is_valid_num_channels(const uint16_t n) {
     return n == 1 || n == 2;
 }
 
+// Size of uint32 implicitly checks the upper bound of 4.3 GHz
 static inline bool is_valid_sample_rate(const uint32_t n) { return n > 0; }
 
 // Do this first to set global options
