@@ -8,6 +8,11 @@ LFLAGS := -lm -lpthread -L$(RAYLIB) -lraylib
 APP := laythe
 SRC := $(wildcard source/*.c)
 
+ifeq ($(OS),Windows_NT)
+	LFLAGS+=-mwindows -lwinmm
+	APP := laythe.exe
+endif
+
 all: $(SRC)
 	$(CC) -o $(APP) $(SRC) $(INCLUDES) $(LFLAGS) $(CFLAGS)
 
