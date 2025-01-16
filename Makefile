@@ -9,7 +9,7 @@ APP := laythe
 SRC := $(wildcard source/*.c)
 
 ifeq ($(OS),Windows_NT)
-	LFLAGS+=-mwindows -lwinmm
+	LFLAGS+=-lgdi32 -lwinmm
 	APP := laythe.exe
 endif
 
