@@ -24,7 +24,7 @@ static int8_t octave_shift = 0;
 
 // --- Fetching midi ---
 static int32_t midi_fd;
-void *fetch_midi() {
+void *fetch_midi(void*) {
     uint8_t inbytes[4];
     int32_t status;
 
