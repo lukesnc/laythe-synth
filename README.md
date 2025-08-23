@@ -19,7 +19,7 @@ Clone this repository and build [raylib](https://github.com/raysan5/raylib) with
 ```bash
 git clone --recurse-submodules https://github.com/lukesnc/laythe-synth.git
 cd laythe-synth/thirdparty/raylib/src/
-make
+make PLATFORM=PLATFORM_DESKTOP
 cd ../../../
 ```
 

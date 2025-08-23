@@ -17,10 +17,10 @@ jobs:
         submodules: true
 
     - name: Install dependencies
-      run: sudo apt update && sudo apt install -y build-essential clang git libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev libwayland-dev libxkbcommon-dev
+      run: sudo apt update && sudo apt install -y build-essential git libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev libwayland-dev libxkbcommon-dev
 
     - name: Build raylib
-      run: cd thirdparty/raylib/src/ && make && cd ../../../
+      run: cd thirdparty/raylib/src/ && make PLATFORM=PLATFORM_DESKTOP && cd ../../../
 
     - name: Build laythe
       run: make
