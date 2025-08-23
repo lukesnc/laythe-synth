@@ -1,21 +1,13 @@
-CC := $(shell command -v clang 2>/dev/null || command -v gcc)
-CFLAGS := -Wall -Wextra
-
-RAYLIB := thirdparty/raylib/src
-INCLUDES := -I$(RAYLIB)
-LFLAGS := -lm -lpthread -L$(RAYLIB) -lraylib
-
-APP := laythe
-SRC := $(wildcard source/*.c)
+RAYLIB = thirdparty/raylib/src
+CFLAGS = -Wall -Wextra -I$(RAYLIB) -lm -lpthread -L$(RAYLIB) -lraylib 
 
 ifeq ($(OS),Windows_NT)
-	LFLAGS+=-lgdi32 -lwinmm
-	APP := laythe.exe
+	CFLAGS+=-lgdi32 -lwinmm
 endif
 
-all: $(SRC)
-	$(CC) -o $(APP) $(SRC) $(INCLUDES) $(LFLAGS) $(CFLAGS)
+all: laythe
 
-.PHONY: clean
-clean:
-	rm -f $(APP)
+laythe: $(wildcard source/*.c)
+	$(CC) -o $@ $^ $(CFLAGS)
+
+.PHONY: all
