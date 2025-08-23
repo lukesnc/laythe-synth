@@ -1,4 +1,6 @@
 #include "synth.h"
+
+#define WAV_IMPLEMENTATION
 #include "wav.h"
 
 #include "raylib.h"
@@ -24,7 +26,7 @@ static int8_t octave_shift = 0;
 
 // --- Fetching midi ---
 static int32_t midi_fd;
-void *fetch_midi(void*) {
+void *fetch_midi(void *) {
     uint8_t inbytes[4];
     int32_t status;
 
@@ -72,7 +74,7 @@ void record_sample(const int16_t sample) {
     static uint32_t rec_playhead = 0;
 
     if (recording) {
-        write_wav_sample(rec_buffer, rec_playhead, sample);
+        wav_write_sample(rec_buffer, rec_playhead, sample);
         rec_playhead++;
     } else {
         if (rec_playhead > 0) {
@@ -90,10 +92,9 @@ void record_sample(const int16_t sample) {
             const struct tm *timenow;
             const time_t now = time(NULL);
             timenow = gmtime(&now);
-            strftime(filename, sizeof(filename),
-                     "recordings/laythe-%y%m%d_%H%M.wav", timenow);
+            strftime(filename, sizeof(filename), "recordings/laythe-%y%m%d_%H%M.wav", timenow);
 
-            write_wav_file(filename, rec_buffer, rec_playhead);
+            wav_write_file(filename, rec_buffer, rec_playhead);
             rec_playhead = 0;
         }
     }
@@ -180,9 +181,7 @@ int main(int argc, char *argv[]) {
         } else if (strcmp(argv[i], "--keyboard") == 0) {
             use_keyboard = true;
         } else {
-            fprintf(stderr,
-                    "usage: %s [--dev /dev/<midi_controller>] [--keyboard]\n",
-                    argv[0]);
+            fprintf(stderr, "usage: %s [--dev /dev/<midi_controller>] [--keyboard]\n", argv[0]);
             return 1;
         }
     }
