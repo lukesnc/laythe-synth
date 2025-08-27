@@ -18,6 +18,7 @@ Clone this repository and build Laythe:
 
 ```bash
 git clone --recurse-submodules https://github.com/lukesnc/laythe-synth.git
+cd laythe-synth/
 make
 ```
 
@@ -30,11 +31,11 @@ usage: ./laythe [--dev /dev/<midi_controller>] [--keyboard]
 
 The default MIDI device that is checked for is `/dev/snd/seq`. This can be overridden by passing a device with `--dev`.
 
-Laythe can also be controlled with the keyboard by passing the `--keyboard` option.
+Laythe can also be controlled with the keyboard by passing the `--keyboard` option. The mappings are:
 
-Black keys: W-P
+Black keys: `W - P`
 
-White keys: A-;
+White keys: `A - ;`
 
 ## TODO
 
