@@ -16,4 +16,4 @@ $(LIBRAYLIB):
 SRC = $(wildcard source/*.c)
 
 laythe: $(LIBRAYLIB) $(SRC)
-	$(CC) -o $@ $^ $(CFLAGS)
+	$(CC) -o $@ $(SRC) $(CFLAGS)
