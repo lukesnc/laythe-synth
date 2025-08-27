@@ -33,6 +33,7 @@ The default MIDI device that is checked for is `/dev/snd/seq`. This can be overr
 Laythe can also be controlled with the keyboard by passing the `--keyboard` option.
 
 Black keys: W-P
+
 White keys: A-;
 
 ## TODO
