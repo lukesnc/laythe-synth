@@ -5,9 +5,15 @@ ifeq ($(OS),Windows_NT)
 	CFLAGS+=-lgdi32 -lwinmm
 endif
 
+.PHONY: all
 all: laythe
 
-laythe: $(wildcard source/*.c)
-	$(CC) -o $@ $^ $(CFLAGS)
+LIBRAYLIB = $(RAYLIB)/libraylib.a
 
-.PHONY: all
+$(LIBRAYLIB):
+	$(MAKE) PLATFORM=PLATFORM_DESKTOP -C $(RAYLIB)
+
+SRC = $(wildcard source/*.c)
+
+laythe: $(LIBRAYLIB) $(SRC)
+	$(CC) -o $@ $^ $(CFLAGS)
